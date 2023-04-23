@@ -16,7 +16,10 @@
 
 package unicstar.oknet.okhttp
 
-import okhttp3.*
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import unicstar.oknet.okhttp.OkDomain.addHeader
 import unicstar.oknet.okhttp.OkDomain.addMainHeader
 import unicstar.oknet.okhttp.OkDomain.enable
@@ -25,11 +28,6 @@ import unicstar.oknet.okhttp.OkDomain.removeMainHeader
 import unicstar.oknet.okhttp.OkDomain.setDomain
 import unicstar.oknet.okhttp.OkDomain.setMainDomain
 import unicstar.oknet.okhttp.OkDomain.useOkDomain
-
-fun OkHttpClient.Builder.addOkDomain(baseUrl: String): OkHttpClient.Builder {
-    OkDomain.useOkDomain(this, baseUrl)
-    return this
-}
 
 /**
  * 用于动态配置和切换Okhttp的baseurl
@@ -52,7 +50,8 @@ object OkDomain {
     const val DOMAIN_NAME = "Domain-Name"
     const val DOMAIN_NAME_HEADER = "$DOMAIN_NAME:"
 
-    private var domainInterceptor: DomainInterceptor? = null
+    internal var domainInterceptor: DomainInterceptor? = null
+        private set
 
     var enable: Boolean
         @JvmStatic
@@ -62,9 +61,12 @@ object OkDomain {
             domainInterceptor?.enable = value
         }
 
+    /**
+     * 是否开启调试日志
+     */
     @get:JvmStatic
     @set:JvmStatic
-    var debug: Boolean = false
+    var debuggable: Boolean = false
 
     /**
      * 使用OkDomain
@@ -151,6 +153,7 @@ object OkDomain {
      */
     internal class DomainInterceptor(baseUrl: String) : Interceptor {
 
+        @JvmField
         var enable: Boolean = true
 
         private val configs = mutableMapOf<String, DomainConfig>()
@@ -382,14 +385,8 @@ object OkDomain {
      */
     @JvmStatic
     internal inline fun logD(msgFactory: () -> String) {
-        if (debug)
+        if (debuggable)
             println("$TAG:${msgFactory.invoke()}")
     }
 
-}
-
-internal fun Headers?.contains(key: String): Boolean {
-    if (this == null)
-        return false
-    return key.isNotEmpty() && !this.get(key).isNullOrEmpty()
 }

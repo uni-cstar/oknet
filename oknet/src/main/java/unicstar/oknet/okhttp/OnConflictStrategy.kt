@@ -36,6 +36,12 @@ sealed class OnConflictStrategy {
         value: String
     )
 
+    internal fun Headers?.contains(key: String): Boolean {
+        if (this == null)
+            return false
+        return key.isNotEmpty() && !this.get(key).isNullOrEmpty()
+    }
+
     /**
      * if header is exists in original request,ignore(do nothing).
      */

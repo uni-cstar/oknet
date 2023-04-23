@@ -1,6 +1,6 @@
 apply plugin: 'java-library'
 apply plugin: 'kotlin'
-//apply plugin: 'org.jetbrains.dokka'
+//需要发布的时候开启下面配置
 //使用参考：https://github.com/vanniktech/gradle-maven-publish-plugin/blob/main/docs/base.md
 apply plugin: 'com.vanniktech.maven.publish'
 
@@ -18,11 +18,50 @@ java {
 }
 
 dependencies {
-    testImplementation 'junit:junit:4.+'
-    implementation 'com.squareup.okhttp3:okhttp:3.12.12'
+    def retrofit_version = '2.6.4'
+    def okhttp_version = '3.12.12'
 
+    testImplementation 'junit:junit:4.+'
     /*部分类用到了Android SDK相关的类*/
     compileOnly 'com.google.android:android:4.1.1.4'
+
+    implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
+
+    /**
+     *  [Retrofit]  Http客户端实现
+     *  <proguard>
+     *  https://github.com/square/retrofit
+     *      间接引入：
+     *       [OkHttp] <proguard>
+     *       [Okio] <proguard>
+     *  Retrofit requires at minimum Java 8+ or Android API 21+.
+     *  高版本只支持ApiLevel 21；
+     *  支持到4.4 retrofit + okhttp的版本不能太高：okhttp3_version = "3.14.4" retrofit_version = "2.7.1"
+     */
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+
+    /*关于日志：如果开启了debug模式，再检测用户是否添加了日志依赖，如果添加则引入*/
+
+    /**
+     *  [logging-interceptor] okhttp请求日志打印拦截器，版本号与okhttp版本一致
+     *  https://github.com/square/okhttp/tree/master/okhttp-logging-interceptor
+     */
+    compileOnly "com.squareup.okhttp3:logging-interceptor:$okhttp_version"
+
+
+    /*关于Converter，如果用户依赖了moshi，则优先使用moshi，如果没有再检查Gson*/
+
+    //retrofit 如果是kotlin，则考虑使用moshi
+    compileOnly "com.squareup.retrofit2:converter-moshi:$retrofit_version"
+
+     /**
+     *  [Retrofit Converter Gson] 使用Gson作为Retrofit的序列化和反序列化工具
+     *  <proguard>
+     *  https://github.com/square/retrofit/wiki/Converters
+     *  https://github.com/google/gson
+     */
+    compileOnly "com.squareup.retrofit2:converter-gson:$retrofit_version"
+
 }
 tasks.withType(Javadoc) {
     options.encoding = "utf-8"
@@ -45,6 +84,7 @@ tasks.withType(Javadoc) {
 //    from javadoc.destinationDir
 //}
 
+/*以下是生成混淆jar的代码，但是不知道怎么让打包的时候使用混淆的jar*/
 
 //import proguard.gradle.ProGuardTask
 
